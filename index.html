@@ -1,0 +1,1558 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ゴミ出しヒーロー</title>
+  <style>
+    :root{
+      --bg:#f6f8fc;
+      --card:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --accent:#2563eb;
+      --accent2:#0ea5e9;
+      --good:#16a34a;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --shadow:0 12px 30px rgba(15, 23, 42, .08);
+      --radius:22px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:
+      radial-gradient(circle at top left, rgba(37,99,235,.08), transparent 28%),
+      radial-gradient(circle at top right, rgba(14,165,233,.10), transparent 30%),
+      var(--bg);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    }
+    body{min-height:100vh}
+    button,input,select{font:inherit}
+    button{cursor:pointer}
+    .app{max-width:1200px;margin:0 auto;padding:18px 14px 32px}
+    .card{
+      background:rgba(255,255,255,.92);
+      backdrop-filter:blur(10px);
+      border:1px solid rgba(229,231,235,.9);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+    .hero{
+      display:grid;
+      grid-template-columns:1.4fr .9fr;
+      gap:18px;
+      padding:22px;
+      align-items:stretch;
+      margin-bottom:14px;
+    }
+    .eyebrow{
+      margin:0 0 8px;
+      color:var(--accent);
+      font-size:.86rem;
+      font-weight:800;
+      letter-spacing:.04em;
+    }
+    h1{
+      margin:0;
+      font-size:clamp(2rem, 4vw, 3rem);
+      line-height:1.08;
+      letter-spacing:.02em;
+    }
+    .lead{
+      margin:10px 0 0;
+      color:var(--muted);
+      line-height:1.7;
+    }
+    .hero-stats{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px;
+    }
+    .hero-stat{
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px;
+      background:linear-gradient(180deg,#fff, #f8fbff);
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      min-height:98px;
+    }
+    .hero-stat span{color:var(--muted);font-size:.84rem;font-weight:700}
+    .hero-stat strong{font-size:1.55rem;line-height:1.15;margin-top:6px}
+    .hero-stat small{margin-top:6px;color:var(--accent);font-weight:700}
+    .message{
+      margin:12px 0 16px;
+      min-height:0;
+      padding:0 16px;
+      border-radius:18px;
+      display:none;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      font-weight:700;
+      line-height:1.6;
+    }
+    .message.show{display:flex;padding:14px 16px}
+    .message.info{background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8}
+    .message.success{background:#ecfdf5;border:1px solid #bbf7d0;color:#166534}
+    .message.warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
+    .message.error{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c}
+    .summary-grid{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:14px;
+      margin-bottom:14px;
+    }
+    .summary{
+      padding:16px;
+      min-height:140px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+    }
+    .summary .label{color:var(--muted);font-size:.85rem;font-weight:800}
+    .summary .main{font-size:1.2rem;font-weight:900;line-height:1.4;margin-top:8px}
+    .summary .sub{margin-top:10px;color:var(--muted);line-height:1.6;font-size:.92rem}
+    .section{
+      padding:18px;
+      margin-bottom:14px;
+    }
+    .section-head{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:flex-start;
+      margin-bottom:14px;
+      flex-wrap:wrap;
+    }
+    .section-head h2{
+      margin:0;
+      font-size:1.22rem;
+      line-height:1.3;
+    }
+    .section-head p{
+      margin:2px 0 0;
+      color:var(--muted);
+      line-height:1.6;
+      font-size:.92rem;
+    }
+    .quick-fill,.suggestions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin:0 0 14px;
+    }
+    .chip-btn{
+      border:1px solid #dbeafe;
+      background:#f8fbff;
+      color:#1d4ed8;
+      border-radius:999px;
+      padding:9px 12px;
+      font-weight:800;
+      min-height:38px;
+    }
+    .chip-btn:hover{background:#eff6ff}
+    .form{
+      display:grid;
+      grid-template-columns:1.25fr .95fr;
+      gap:12px;
+      align-items:start;
+      margin-bottom:14px;
+    }
+    .form.one{grid-template-columns:1fr}
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:7px;
+    }
+    .field label{
+      font-size:.9rem;
+      font-weight:800;
+      color:#374151;
+    }
+    .field input[type="text"],
+    .field select{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fff;
+      padding:12px 13px;
+      min-height:46px;
+      color:var(--text);
+      outline:none;
+      transition:border-color .15s, box-shadow .15s;
+    }
+    .field input[type="text"]:focus,
+    .field select:focus{
+      border-color:rgba(37,99,235,.55);
+      box-shadow:0 0 0 4px rgba(37,99,235,.10);
+    }
+    .hint{color:var(--muted);font-size:.88rem;line-height:1.6}
+    .weekday-picker{
+      display:grid;
+      grid-template-columns:repeat(7,minmax(0,1fr));
+      gap:8px;
+    }
+    .weekday-picker label{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:11px 8px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      background:#fff;
+      font-weight:800;
+      user-select:none;
+    }
+    .weekday-picker input{margin:0}
+    .form-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:4px;
+    }
+    .btn{
+      border:none;
+      border-radius:14px;
+      min-height:46px;
+      padding:0 16px;
+      font-weight:900;
+      color:#fff;
+      background:var(--accent);
+      box-shadow:0 10px 18px rgba(37,99,235,.16);
+      transition:transform .12s, box-shadow .12s, background .12s;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(1px)}
+    .btn.secondary{
+      background:#64748b;
+      box-shadow:0 10px 18px rgba(100,116,139,.14);
+    }
+    .btn.ghost{
+      background:#fff;
+      color:#374151;
+      border:1px solid var(--line);
+      box-shadow:none;
+    }
+    .btn.danger{
+      background:var(--bad);
+      box-shadow:0 10px 18px rgba(239,68,68,.12);
+    }
+    .btn:disabled{
+      opacity:.6;
+      cursor:not-allowed;
+      transform:none;
+    }
+    .list-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(290px,1fr));
+      gap:12px;
+    }
+    .list-card{
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:#fff;
+      padding:14px;
+    }
+    .card-top{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+      margin-bottom:10px;
+    }
+    .card-top h3{
+      margin:0;
+      font-size:1.05rem;
+      line-height:1.35;
+    }
+    .card-top .sub{
+      color:var(--muted);
+      margin-top:5px;
+      font-size:.9rem;
+      line-height:1.5;
+    }
+    .meta{
+      color:var(--muted);
+      font-size:.9rem;
+      line-height:1.6;
+      margin-top:10px;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:7px 10px;
+      border-radius:999px;
+      font-size:.82rem;
+      font-weight:900;
+      white-space:nowrap;
+      background:#eef2ff;
+      color:#4338ca;
+      border:1px solid #c7d2fe;
+    }
+    .badge.good{background:#ecfdf5;color:#166534;border-color:#bbf7d0}
+    .badge.warn{background:#fffbeb;color:#92400e;border-color:#fde68a}
+    .badge.bad{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
+    .chip-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:#f8fafc;
+      border:1px solid var(--line);
+      font-size:.82rem;
+      color:#334155;
+      font-weight:800;
+    }
+    .card-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:12px;
+    }
+    .card-actions .btn{
+      min-height:40px;
+      padding:0 12px;
+      font-size:.92rem;
+    }
+    .btn.small{
+      min-height:38px;
+      padding:0 12px;
+      font-size:.92rem;
+    }
+    .empty{
+      border:1px dashed #dbe4f0;
+      border-radius:18px;
+      background:#fbfdff;
+      padding:18px;
+      color:var(--muted);
+      line-height:1.8;
+    }
+    .manage-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-bottom:12px;
+    }
+    .manage-actions .btn{min-height:44px}
+    .footer-meta{
+      color:var(--muted);
+      line-height:1.8;
+      font-size:.92rem;
+      margin-top:8px;
+    }
+    .hidden{display:none !important}
+
+    @media (max-width: 1024px){
+      .hero{grid-template-columns:1fr}
+      .summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .form{grid-template-columns:1fr}
+      .weekday-picker{grid-template-columns:repeat(4,minmax(0,1fr))}
+    }
+    @media (max-width: 620px){
+      .app{padding:12px 10px 24px}
+      .hero{padding:16px}
+      .section{padding:14px}
+      .summary-grid{grid-template-columns:1fr}
+      .weekday-picker{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .hero-stats{grid-template-columns:1fr}
+      .list-grid{grid-template-columns:1fr}
+      .manage-actions .btn,.card-actions .btn,.form-actions .btn{width:100%}
+    }
+    @media (prefers-reduced-motion: reduce){
+      *{scroll-behavior:auto !important;transition:none !important}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="hero card">
+      <div>
+        <p class="eyebrow">ローカル保存 / オフライン向き / 1ファイル完結</p>
+        <h1>ゴミ出しヒーロー</h1>
+        <p class="lead">ごみ種別を登録し、捨てたい物を次回回収日に合わせて管理します。<br>曜日設定・完了記録・連続成功回数・JSONバックアップまで、ひと通りまとめて使えます。</p>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <span>連続成功</span>
+          <strong id="streakValue">0</strong>
+          <small id="titleValue">ゴミ見習い</small>
+        </div>
+        <div class="hero-stat">
+          <span>捨て待ち</span>
+          <strong id="pendingValue">0</strong>
+          <small id="pendingHint">登録中の物</small>
+        </div>
+        <div class="hero-stat">
+          <span>完了</span>
+          <strong id="completedValue">0</strong>
+          <small id="completedHint">完了リスト</small>
+        </div>
+        <div class="hero-stat">
+          <span>ごみ種別</span>
+          <strong id="typeCountValue">0</strong>
+          <small id="typeHint">曜日を設定</small>
+        </div>
+      </div>
+    </header>
+
+    <div id="messageBar" class="message" aria-live="polite"></div>
+
+    <section class="summary-grid">
+      <article class="summary card">
+        <div class="label">今日の日付</div>
+        <div id="todayDateText" class="main">未設定</div>
+        <div id="todayDateSub" class="sub"></div>
+      </article>
+      <article class="summary card">
+        <div class="label">今日のゴミ</div>
+        <div id="todayGarbageText" class="main">未設定</div>
+        <div id="todayGarbageSub" class="sub"></div>
+        <div id="todayGarbageChips" class="chip-row"></div>
+      </article>
+      <article class="summary card">
+        <div class="label">次回のゴミ</div>
+        <div id="nextGarbageText" class="main">未設定</div>
+        <div id="nextGarbageSub" class="sub"></div>
+        <div id="nextGarbageChips" class="chip-row"></div>
+      </article>
+      <article class="summary card">
+        <div class="label">保存状況</div>
+        <div id="saveSummary" class="main">0件</div>
+        <div id="saveSummarySub" class="sub"></div>
+      </article>
+    </section>
+
+    <section class="section card">
+      <div class="section-head">
+        <div>
+          <h2>ゴミ種別管理</h2>
+          <p>ごみ種別名と回収曜日を登録します。曜日は複数選択できます。</p>
+        </div>
+        <div class="chip-row">
+          <span class="chip">例: 可燃ごみ</span>
+          <span class="chip">例: 不燃ごみ</span>
+          <span class="chip">例: 資源ごみ</span>
+        </div>
+      </div>
+
+      <div class="quick-fill" aria-label="ごみ種別のテンプレート">
+        <button type="button" class="chip-btn" data-fill-type="可燃ごみ">可燃ごみ</button>
+        <button type="button" class="chip-btn" data-fill-type="不燃ごみ">不燃ごみ</button>
+        <button type="button" class="chip-btn" data-fill-type="プラスチック">プラスチック</button>
+        <button type="button" class="chip-btn" data-fill-type="資源ごみ">資源ごみ</button>
+        <button type="button" class="chip-btn" data-fill-type="ペットボトル">ペットボトル</button>
+      </div>
+
+      <form id="typeForm" class="form one" autocomplete="off">
+        <input type="hidden" id="typeEditingId" value="">
+        <div class="field">
+          <label for="typeName">名称</label>
+          <input type="text" id="typeName" placeholder="例: 可燃ごみ" maxlength="40" />
+        </div>
+
+        <div class="field">
+          <label>回収曜日</label>
+          <div class="weekday-picker">
+            <label><input type="checkbox" id="typeWeek1" value="1">月</label>
+            <label><input type="checkbox" id="typeWeek2" value="2">火</label>
+            <label><input type="checkbox" id="typeWeek3" value="3">水</label>
+            <label><input type="checkbox" id="typeWeek4" value="4">木</label>
+            <label><input type="checkbox" id="typeWeek5" value="5">金</label>
+            <label><input type="checkbox" id="typeWeek6" value="6">土</label>
+            <label><input type="checkbox" id="typeWeek0" value="0">日</label>
+          </div>
+          <div class="hint">複数選択可。曜日が少なくとも1つ必要です。</div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" id="typeSaveBtn" class="btn">登録</button>
+          <button type="button" id="typeClearBtn" class="btn secondary">クリア</button>
+        </div>
+      </form>
+
+      <div id="typeList" class="list-grid"></div>
+    </section>
+
+    <section class="section card">
+      <div class="section-head">
+        <div>
+          <h2>捨てたいもの管理</h2>
+          <p>名前とごみ種別を登録します。入力候補から入れると少し楽です。</p>
+        </div>
+        <div class="chip-row">
+          <span class="chip">次回回収日を自動計算</span>
+          <span class="chip">完了でリスト移動</span>
+        </div>
+      </div>
+
+      <form id="itemForm" class="form" autocomplete="off">
+        <input type="hidden" id="itemEditingId" value="">
+        <div class="field">
+          <label for="itemName">名前</label>
+          <input type="text" id="itemName" list="commonItemList" placeholder="例: 電池" maxlength="60" />
+          <datalist id="commonItemList">
+            <option value="電池"></option>
+            <option value="蛍光灯"></option>
+            <option value="段ボール"></option>
+            <option value="スプレー缶"></option>
+            <option value="ペットボトル"></option>
+            <option value="空き缶"></option>
+            <option value="紙パック"></option>
+            <option value="割れた皿"></option>
+          </datalist>
+          <div id="itemHint" class="hint">ごみ種別が登録されていると自動候補が使えます。</div>
+        </div>
+
+        <div class="field">
+          <label for="itemTypeSelect">ゴミ種別</label>
+          <select id="itemTypeSelect"></select>
+          <div class="hint">捨てたい物は、回収日の分かるごみ種別に紐づけます。</div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" id="itemSaveBtn" class="btn">登録</button>
+          <button type="button" id="itemClearBtn" class="btn secondary">クリア</button>
+        </div>
+      </form>
+
+      <div id="itemSuggestions" class="suggestions"></div>
+      <div id="itemList" class="list-grid"></div>
+    </section>
+
+    <section class="section card">
+      <div class="section-head">
+        <div>
+          <h2>完了リスト</h2>
+          <p>完了にした捨てたい物です。連続成功回数は、回収日に合わせて完了した記録から数えます。</p>
+        </div>
+      </div>
+      <div id="completedList" class="list-grid"></div>
+    </section>
+
+    <section class="section card">
+      <div class="section-head">
+        <div>
+          <h2>管理</h2>
+          <p>JSONでの書き出し・読み込み、全削除、保存件数の確認ができます。</p>
+        </div>
+      </div>
+
+      <div class="manage-actions">
+        <button type="button" id="exportBtn" class="btn">JSONエクスポート</button>
+        <button type="button" id="importBtn" class="btn secondary">JSONインポート</button>
+        <button type="button" id="clearBtn" class="btn danger">全データ削除</button>
+        <input type="file" id="importFile" accept="application/json" class="hidden" />
+      </div>
+
+      <div class="footer-meta" id="storageMeta"></div>
+    </section>
+  </div>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = 'gomi_hero_state_v1';
+
+      const WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0]; // 月〜日
+      const WEEKDAY_SHORT = { 0: '日', 1: '月', 2: '火', 3: '水', 4: '木', 5: '金', 6: '土' };
+      const WEEKDAY_LONG = { 0: '日曜日', 1: '月曜日', 2: '火曜日', 3: '水曜日', 4: '木曜日', 5: '金曜日', 6: '土曜日' };
+
+      const COMMON_TYPES = ['可燃ごみ', '不燃ごみ', 'プラスチック', '資源ごみ', 'ペットボトル'];
+      const COMMON_ITEMS = [
+        { name: '電池', typeName: '不燃ごみ' },
+        { name: '蛍光灯', typeName: '不燃ごみ' },
+        { name: '段ボール', typeName: '資源ごみ' },
+        { name: 'スプレー缶', typeName: '不燃ごみ' },
+        { name: 'ペットボトル', typeName: 'ペットボトル' },
+        { name: '空き缶', typeName: '資源ごみ' },
+        { name: '紙パック', typeName: '資源ごみ' },
+        { name: '壊れた皿', typeName: '不燃ごみ' }
+      ];
+
+      const DOM = {
+        messageBar: document.getElementById('messageBar'),
+        todayDateText: document.getElementById('todayDateText'),
+        todayDateSub: document.getElementById('todayDateSub'),
+        todayGarbageText: document.getElementById('todayGarbageText'),
+        todayGarbageSub: document.getElementById('todayGarbageSub'),
+        todayGarbageChips: document.getElementById('todayGarbageChips'),
+        nextGarbageText: document.getElementById('nextGarbageText'),
+        nextGarbageSub: document.getElementById('nextGarbageSub'),
+        nextGarbageChips: document.getElementById('nextGarbageChips'),
+        saveSummary: document.getElementById('saveSummary'),
+        saveSummarySub: document.getElementById('saveSummarySub'),
+        streakValue: document.getElementById('streakValue'),
+        titleValue: document.getElementById('titleValue'),
+        pendingValue: document.getElementById('pendingValue'),
+        completedValue: document.getElementById('completedValue'),
+        typeCountValue: document.getElementById('typeCountValue'),
+        pendingHint: document.getElementById('pendingHint'),
+        completedHint: document.getElementById('completedHint'),
+        typeHint: document.getElementById('typeHint'),
+
+        typeForm: document.getElementById('typeForm'),
+        typeEditingId: document.getElementById('typeEditingId'),
+        typeName: document.getElementById('typeName'),
+        typeSaveBtn: document.getElementById('typeSaveBtn'),
+        typeClearBtn: document.getElementById('typeClearBtn'),
+        typeList: document.getElementById('typeList'),
+
+        itemForm: document.getElementById('itemForm'),
+        itemEditingId: document.getElementById('itemEditingId'),
+        itemName: document.getElementById('itemName'),
+        itemTypeSelect: document.getElementById('itemTypeSelect'),
+        itemHint: document.getElementById('itemHint'),
+        itemSaveBtn: document.getElementById('itemSaveBtn'),
+        itemClearBtn: document.getElementById('itemClearBtn'),
+        itemSuggestions: document.getElementById('itemSuggestions'),
+        itemList: document.getElementById('itemList'),
+        completedList: document.getElementById('completedList'),
+
+        exportBtn: document.getElementById('exportBtn'),
+        importBtn: document.getElementById('importBtn'),
+        clearBtn: document.getElementById('clearBtn'),
+        importFile: document.getElementById('importFile'),
+        storageMeta: document.getElementById('storageMeta')
+      };
+
+      let state = { garbageTypes: [], items: [] };
+      let messageTimer = null;
+      let editingTypeId = '';
+      let editingItemId = '';
+
+      function uid() {
+        if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+        return 'id-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      }
+
+      function todayDate() {
+        const d = new Date();
+        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      }
+
+      function normalizeDate(d) {
+        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      }
+
+      function addDays(date, days) {
+        const d = normalizeDate(date);
+        d.setDate(d.getDate() + days);
+        return d;
+      }
+
+      function dateKey(date) {
+        return [
+          date.getFullYear(),
+          String(date.getMonth() + 1).padStart(2, '0'),
+          String(date.getDate()).padStart(2, '0')
+        ].join('-');
+      }
+
+      function parseDateKey(key) {
+        if (!key || typeof key !== 'string') return null;
+        const [y, m, d] = key.split('-').map(Number);
+        if (!y || !m || !d) return null;
+        return new Date(y, m - 1, d);
+      }
+
+      function sameDay(a, b) {
+        return dateKey(a) === dateKey(b);
+      }
+
+      function diffDays(a, b) {
+        const startA = normalizeDate(a).getTime();
+        const startB = normalizeDate(b).getTime();
+        return Math.round((startB - startA) / 86400000);
+      }
+
+      function formatYMD(date) {
+        return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+      }
+
+      function formatShortDate(date, withWeekday = true) {
+        const base = `${date.getMonth() + 1}/${date.getDate()}`;
+        return withWeekday ? `${base}（${WEEKDAY_LONG[date.getDay()]}）` : base;
+      }
+
+      function formatLongDate(date) {
+        return `${formatYMD(date)}（${WEEKDAY_LONG[date.getDay()]}）`;
+      }
+
+      function formatLabelDate(date, ref = todayDate()) {
+        if (!date) return '未設定';
+        if (sameDay(date, ref)) return '今日';
+        const y = date.getFullYear() !== ref.getFullYear();
+        return y ? `${formatYMD(date)}（${WEEKDAY_LONG[date.getDay()]}）` : formatShortDate(date);
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
+      }
+
+      function rankWeekdays(days) {
+        const rank = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 0: 6 };
+        return [...new Set(days)].sort((a, b) => rank[a] - rank[b]);
+      }
+
+      function normalizeType(raw) {
+        if (!raw) return null;
+        const name = String(raw.name || '').trim();
+        if (!name) return null;
+        const weekdays = Array.isArray(raw.weekdays)
+          ? rankWeekdays(raw.weekdays.map(n => Number(n)).filter(n => Number.isInteger(n) && n >= 0 && n <= 6))
+          : [];
+        return {
+          id: raw.id || uid(),
+          name,
+          weekdays,
+          createdAt: raw.createdAt || dateKey(todayDate()),
+          updatedAt: raw.updatedAt || raw.createdAt || dateKey(todayDate())
+        };
+      }
+
+      function normalizeItem(raw) {
+        if (!raw) return null;
+        const name = String(raw.name || '').trim();
+        if (!name) return null;
+        const completed = Boolean(raw.completed);
+        return {
+          id: raw.id || uid(),
+          name,
+          garbageTypeId: String(raw.garbageTypeId || ''),
+          createdAt: raw.createdAt || dateKey(todayDate()),
+          completed,
+          completedAt: completed ? (raw.completedAt || dateKey(todayDate())) : null,
+          completedScheduledDate: completed ? (raw.completedScheduledDate || null) : null,
+          completedOnTime: completed ? Boolean(raw.completedOnTime) : false,
+          updatedAt: raw.updatedAt || raw.createdAt || dateKey(todayDate())
+        };
+      }
+
+      function loadState() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+          if (!saved) return;
+          const garbageTypes = Array.isArray(saved.garbageTypes) ? saved.garbageTypes.map(normalizeType).filter(Boolean) : [];
+          const typeIdSet = new Set(garbageTypes.map(t => t.id));
+          const items = Array.isArray(saved.items) ? saved.items.map(normalizeItem).filter(Boolean) : [];
+          items.forEach(item => {
+            if (item.garbageTypeId && !typeIdSet.has(item.garbageTypeId)) {
+              item.garbageTypeId = '';
+            }
+          });
+          state = { garbageTypes, items };
+        } catch (_) {
+          state = { garbageTypes: [], items: [] };
+        }
+      }
+
+      function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          version: 1,
+          garbageTypes: state.garbageTypes,
+          items: state.items
+        }));
+      }
+
+      function setMessage(text, kind = 'info') {
+        clearTimeout(messageTimer);
+        if (!text) {
+          DOM.messageBar.className = 'message';
+          DOM.messageBar.textContent = '';
+          DOM.messageBar.style.display = 'none';
+          return;
+        }
+        DOM.messageBar.textContent = text;
+        DOM.messageBar.className = `message show ${kind}`;
+        DOM.messageBar.style.display = 'flex';
+        messageTimer = setTimeout(() => {
+          DOM.messageBar.textContent = '';
+          DOM.messageBar.className = 'message';
+          DOM.messageBar.style.display = 'none';
+        }, 3800);
+      }
+
+      function getTypeById(id) {
+        return state.garbageTypes.find(t => t.id === id) || null;
+      }
+
+      function getTypeUsedCount(typeId) {
+        return state.items.filter(item => item.garbageTypeId === typeId).length;
+      }
+
+      function getPendingCountForType(typeId) {
+        return state.items.filter(item => !item.completed && item.garbageTypeId === typeId).length;
+      }
+
+      function getPendingItems() {
+        return state.items.filter(item => !item.completed);
+      }
+
+      function getCompletedItems() {
+        return state.items.filter(item => item.completed);
+      }
+
+      function getNextCollectionDate(type, from = todayDate()) {
+        if (!type || !Array.isArray(type.weekdays) || type.weekdays.length === 0) return null;
+        const current = from.getDay();
+        let best = null;
+        let minDiff = 8;
+        for (const w of type.weekdays) {
+          const diff = (w - current + 7) % 7;
+          if (diff < minDiff) {
+            minDiff = diff;
+            best = addDays(from, diff);
+          }
+        }
+        return best;
+      }
+
+      function getNextGarbageInfo(from = todayDate()) {
+        const rows = [];
+        state.garbageTypes.forEach(type => {
+          const date = getNextCollectionDate(type, from);
+          if (date) rows.push({ type, date });
+        });
+        if (!rows.length) return null;
+        rows.sort((a, b) => dateKey(a.date).localeCompare(dateKey(b.date)) || a.type.name.localeCompare(b.type.name, 'ja'));
+        const first = rows[0];
+        const same = rows.filter(r => sameDay(r.date, first.date)).map(r => r.type);
+        return {
+          date: first.date,
+          types: same
+        };
+      }
+
+      function getTodayGarbageTypes(from = todayDate()) {
+        const day = from.getDay();
+        return state.garbageTypes.filter(type => type.weekdays.includes(day));
+      }
+
+      function sortPendingItems(items) {
+        const today = todayDate();
+        return [...items].sort((a, b) => {
+          const da = getNextDueForItem(a, today);
+          const db = getNextDueForItem(b, today);
+          const ka = da ? dateKey(da) : '9999-99-99';
+          const kb = db ? dateKey(db) : '9999-99-99';
+          if (ka !== kb) return ka.localeCompare(kb);
+          return a.createdAt.localeCompare(b.createdAt) || a.name.localeCompare(b.name, 'ja');
+        });
+      }
+
+      function sortCompletedItems(items) {
+        return [...items].sort((a, b) => {
+          const ka = b.completedAt || '';
+          const kb = a.completedAt || '';
+          return ka.localeCompare(kb) || b.createdAt.localeCompare(a.createdAt) || a.name.localeCompare(b.name, 'ja');
+        });
+      }
+
+      function getNextDueForItem(item, from = todayDate()) {
+        const type = getTypeById(item.garbageTypeId);
+        if (!type) return null;
+        return getNextCollectionDate(type, from);
+      }
+
+      function renderWeekdayChips(days) {
+        if (!days || !days.length) return '<span class="chip">曜日未設定</span>';
+        return rankWeekdays(days).map(d => `<span class="chip">${WEEKDAY_SHORT[d]}曜日</span>`).join('');
+      }
+
+      function renderDashboard() {
+        const today = todayDate();
+        const todayGarbage = getTodayGarbageTypes(today);
+        const nextInfo = getNextGarbageInfo(today);
+        const pending = getPendingItems();
+        const completed = getCompletedItems();
+        const streak = getSuccessStreak();
+        const title = getTitleByStreak(streak);
+
+        DOM.todayDateText.textContent = formatLongDate(today);
+        DOM.todayDateSub.textContent = '今日の曜日設定と捨てたい物の次回日をまとめて表示します。';
+
+        if (todayGarbage.length) {
+          DOM.todayGarbageText.textContent = todayGarbage.map(t => t.name).join(' / ');
+          DOM.todayGarbageSub.textContent = `${todayGarbage.length}種のごみ種別が今日の回収対象です。`;
+          DOM.todayGarbageChips.innerHTML = todayGarbage.map(type => {
+            const pendingCount = getPendingCountForType(type.id);
+            return `<span class="chip">${escapeHtml(type.name)}${pendingCount ? `・捨て待ち${pendingCount}件` : ''}</span>`;
+          }).join('');
+        } else if (state.garbageTypes.length) {
+          DOM.todayGarbageText.textContent = '今日は回収なし';
+          DOM.todayGarbageSub.textContent = 'ごみ種別の曜日設定が今日とは一致していません。';
+          DOM.todayGarbageChips.innerHTML = '';
+        } else {
+          DOM.todayGarbageText.textContent = '未設定';
+          DOM.todayGarbageSub.textContent = 'まずはごみ種別と回収曜日を登録してください。';
+          DOM.todayGarbageChips.innerHTML = '';
+        }
+
+        if (nextInfo) {
+          DOM.nextGarbageText.textContent = formatLabelDate(nextInfo.date, today);
+          DOM.nextGarbageSub.textContent = `次回は${nextInfo.types.length}種のごみ種別が対象です。`;
+          DOM.nextGarbageChips.innerHTML = nextInfo.types.map(type => `<span class="chip">${escapeHtml(type.name)}</span>`).join('');
+        } else if (state.garbageTypes.length) {
+          DOM.nextGarbageText.textContent = '未設定';
+          DOM.nextGarbageSub.textContent = '曜日が入ったごみ種別を登録すると表示されます。';
+          DOM.nextGarbageChips.innerHTML = '';
+        } else {
+          DOM.nextGarbageText.textContent = '未設定';
+          DOM.nextGarbageSub.textContent = 'ここには次回の回収日が表示されます。';
+          DOM.nextGarbageChips.innerHTML = '';
+        }
+
+        DOM.saveSummary.textContent = `${state.garbageTypes.length + state.items.length}件`;
+        DOM.saveSummarySub.textContent = `ごみ種別 ${state.garbageTypes.length}件 / 捨てたい物 ${state.items.length}件 / 完了 ${completed.length}件`;
+
+        DOM.streakValue.textContent = String(streak);
+        DOM.titleValue.textContent = title;
+        DOM.pendingValue.textContent = String(pending.length);
+        DOM.completedValue.textContent = String(completed.length);
+        DOM.typeCountValue.textContent = String(state.garbageTypes.length);
+
+        DOM.pendingHint.textContent = pending.length ? '登録中の物' : 'まだありません';
+        DOM.completedHint.textContent = completed.length ? '完了リスト' : '空です';
+        DOM.typeHint.textContent = state.garbageTypes.length ? '曜日を設定' : '未登録';
+
+        DOM.storageMeta.textContent = `保存件数: ごみ種別 ${state.garbageTypes.length}件 / 捨てたい物 ${state.items.length}件 / 完了 ${completed.length}件`;
+      }
+
+      function renderTypeSelect() {
+        const current = DOM.itemTypeSelect.value;
+        const types = state.garbageTypes;
+        if (!types.length) {
+          DOM.itemTypeSelect.innerHTML = '<option value="">先にごみ種別を登録してください</option>';
+          DOM.itemTypeSelect.disabled = true;
+          DOM.itemSaveBtn.disabled = true;
+          DOM.itemHint.textContent = 'ごみ種別が登録されるまで、捨てたい物は追加できません。';
+          return;
+        }
+        DOM.itemTypeSelect.disabled = false;
+        DOM.itemSaveBtn.disabled = false;
+        DOM.itemTypeSelect.innerHTML = [
+          '<option value="">-- ごみ種別を選択 --</option>',
+          ...types.map(type => `<option value="${escapeHtml(type.id)}">${escapeHtml(type.name)}</option>`)
+        ].join('');
+        if (current && types.some(t => t.id === current)) {
+          DOM.itemTypeSelect.value = current;
+        }
+      }
+
+      function renderItemSuggestions() {
+        DOM.itemSuggestions.innerHTML = COMMON_ITEMS.map(item => {
+          return `<button type="button" class="chip-btn" data-action="suggest-item" data-name="${escapeHtml(item.name)}" data-type="${escapeHtml(item.typeName)}">${escapeHtml(item.name)} → ${escapeHtml(item.typeName)}</button>`;
+        }).join('');
+      }
+
+      function renderTypes() {
+        if (!state.garbageTypes.length) {
+          DOM.typeList.innerHTML = `
+            <div class="empty">
+              まだごみ種別がありません。<br>
+              <strong>名称</strong>と<strong>回収曜日</strong>を登録すると、今日のゴミと次回のゴミが表示されます。
+            </div>
+          `;
+          return;
+        }
+
+        const today = todayDate();
+        DOM.typeList.innerHTML = state.garbageTypes.map(type => {
+          const next = getNextCollectionDate(type, today);
+          const used = getTypeUsedCount(type.id);
+          const pending = getPendingCountForType(type.id);
+          const nextText = next ? formatLabelDate(next, today) : '曜日未設定';
+          const nextBadgeClass = next ? (sameDay(next, today) ? 'good' : 'warn') : '';
+          return `
+            <article class="list-card">
+              <div class="card-top">
+                <div>
+                  <h3>${escapeHtml(type.name)}</h3>
+                  <div class="sub">次回回収: <strong>${escapeHtml(nextText)}</strong></div>
+                </div>
+                <span class="badge ${nextBadgeClass}">${pending}件</span>
+              </div>
+              <div class="chip-row">${renderWeekdayChips(type.weekdays)}</div>
+              <div class="meta">紐づく物 ${used}件 / 捨て待ち ${pending}件</div>
+              <div class="card-actions">
+                <button type="button" class="btn small ghost" data-action="edit-type" data-id="${escapeHtml(type.id)}">編集</button>
+                <button type="button" class="btn small danger" data-action="delete-type" data-id="${escapeHtml(type.id)}">削除</button>
+              </div>
+            </article>
+          `;
+        }).join('');
+      }
+
+      function renderItems() {
+        const pending = sortPendingItems(getPendingItems());
+        if (!pending.length) {
+          DOM.itemList.innerHTML = `
+            <div class="empty">
+              捨てたい物はまだありません。<br>
+              例: <strong>電池</strong>、<strong>段ボール</strong>、<strong>スプレー缶</strong> などを登録すると、次回回収日を自動表示します。
+            </div>
+          `;
+        } else {
+          const today = todayDate();
+          DOM.itemList.innerHTML = pending.map(item => {
+            const type = getTypeById(item.garbageTypeId);
+            const next = getNextDueForItem(item, today);
+            const nextText = next ? formatLabelDate(next, today) : '曜日未設定';
+            const nextClass = next ? (sameDay(next, today) ? 'good' : 'warn') : 'bad';
+            const age = diffDays(parseDateKey(item.createdAt), today);
+            return `
+              <article class="list-card">
+                <div class="card-top">
+                  <div>
+                    <h3>${escapeHtml(item.name)}</h3>
+                    <div class="sub">${escapeHtml(type ? type.name : '未分類')} / 次回: <strong>${escapeHtml(nextText)}</strong></div>
+                  </div>
+                  <span class="badge ${nextClass}">登録から ${age}日</span>
+                </div>
+                <div class="chip-row">
+                  ${type ? renderWeekdayChips(type.weekdays) : '<span class="chip">ごみ種別が未設定</span>'}
+                </div>
+                <div class="meta">登録日 ${escapeHtml(formatLongDate(parseDateKey(item.createdAt) || today))}</div>
+                <div class="card-actions">
+                  <button type="button" class="btn small" data-action="complete-item" data-id="${escapeHtml(item.id)}">完了</button>
+                  <button type="button" class="btn small ghost" data-action="edit-item" data-id="${escapeHtml(item.id)}">編集</button>
+                  <button type="button" class="btn small danger" data-action="delete-item" data-id="${escapeHtml(item.id)}">削除</button>
+                </div>
+              </article>
+            `;
+          }).join('');
+        }
+
+        const completed = sortCompletedItems(getCompletedItems());
+        if (!completed.length) {
+          DOM.completedList.innerHTML = `
+            <div class="empty">
+              完了リストは空です。<br>
+              ごみ回収日に合わせて <strong>完了</strong> を押すと、ここへ移動します。
+            </div>
+          `;
+        } else {
+          const today = todayDate();
+          DOM.completedList.innerHTML = completed.map(item => {
+            const type = getTypeById(item.garbageTypeId);
+            const onTime = Boolean(item.completedOnTime);
+            const scheduled = item.completedScheduledDate ? parseDateKey(item.completedScheduledDate) : null;
+            const completedAt = item.completedAt ? parseDateKey(item.completedAt) : null;
+            const statusText = onTime ? '成功' : '完了';
+            const badgeClass = onTime ? 'good' : 'warn';
+            const age = diffDays(parseDateKey(item.createdAt), completedAt || today);
+            return `
+              <article class="list-card">
+                <div class="card-top">
+                  <div>
+                    <h3>${escapeHtml(item.name)}</h3>
+                    <div class="sub">${escapeHtml(type ? type.name : '未分類')} / 完了: ${escapeHtml(completedAt ? formatLongDate(completedAt) : '未設定')}</div>
+                  </div>
+                  <span class="badge ${badgeClass}">${statusText}</span>
+                </div>
+                <div class="chip-row">
+                  ${scheduled ? `<span class="chip">予定日 ${escapeHtml(formatLabelDate(scheduled, today))}</span>` : ''}
+                  ${completedAt ? `<span class="chip">完了日 ${escapeHtml(formatLongDate(completedAt))}</span>` : ''}
+                  <span class="chip">登録から ${age}日</span>
+                </div>
+                <div class="card-actions">
+                  <button type="button" class="btn small ghost" data-action="restore-item" data-id="${escapeHtml(item.id)}">戻す</button>
+                  <button type="button" class="btn small danger" data-action="delete-item" data-id="${escapeHtml(item.id)}">削除</button>
+                </div>
+              </article>
+            `;
+          }).join('');
+        }
+      }
+
+      function getSuccessStreak() {
+        const successDays = new Set();
+        state.items.forEach(item => {
+          if (item.completed && item.completedOnTime && item.completedAt) {
+            successDays.add(item.completedAt);
+          }
+        });
+        if (!successDays.size) return 0;
+
+        const sorted = [...successDays].sort();
+        let cursor = sorted[sorted.length - 1];
+        let streak = 0;
+        while (successDays.has(cursor)) {
+          streak++;
+          const next = parseDateKey(cursor);
+          next.setDate(next.getDate() - 1);
+          cursor = dateKey(next);
+        }
+        return streak;
+      }
+
+      function getTitleByStreak(streak) {
+        if (streak >= 14) return 'ゴミ神';
+        if (streak >= 7) return 'ゴミマスター';
+        if (streak >= 3) return 'ゴミ職人';
+        return 'ゴミ見習い';
+      }
+
+      function renderForms() {
+        const typeEditing = Boolean(editingTypeId);
+        const itemEditing = Boolean(editingItemId);
+        DOM.typeSaveBtn.textContent = typeEditing ? '更新' : '登録';
+        DOM.itemSaveBtn.textContent = itemEditing ? '更新' : '登録';
+        DOM.typeClearBtn.textContent = typeEditing ? '編集中止' : 'クリア';
+        DOM.itemClearBtn.textContent = itemEditing ? '編集中止' : 'クリア';
+      }
+
+      function renderAll() {
+        renderDashboard();
+        renderTypeSelect();
+        renderTypeSuggestions();
+        renderTypes();
+        renderItemSuggestions();
+        renderItems();
+        renderForms();
+      }
+
+      function renderTypeSuggestions() {
+        // quick-fill buttons are static; nothing required here
+      }
+
+      function clearTypeForm() {
+        editingTypeId = '';
+        DOM.typeEditingId.value = '';
+        DOM.typeName.value = '';
+        WEEKDAY_ORDER.forEach(day => {
+          const box = document.getElementById(`typeWeek${day}`);
+          if (box) box.checked = false;
+        });
+        renderForms();
+      }
+
+      function setTypeForm(type) {
+        editingTypeId = type.id;
+        DOM.typeEditingId.value = type.id;
+        DOM.typeName.value = type.name;
+        WEEKDAY_ORDER.forEach(day => {
+          const box = document.getElementById(`typeWeek${day}`);
+          if (box) box.checked = type.weekdays.includes(day);
+        });
+        renderForms();
+        DOM.typeName.focus();
+        DOM.typeForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      function getTypeFormWeekdays() {
+        return WEEKDAY_ORDER.filter(day => {
+          const box = document.getElementById(`typeWeek${day}`);
+          return box && box.checked;
+        });
+      }
+
+      function clearItemForm() {
+        editingItemId = '';
+        DOM.itemEditingId.value = '';
+        DOM.itemName.value = '';
+        DOM.itemTypeSelect.value = '';
+        DOM.itemHint.textContent = 'ごみ種別が登録されていると自動候補が使えます。';
+        renderForms();
+      }
+
+      function setItemForm(item) {
+        editingItemId = item.id;
+        DOM.itemEditingId.value = item.id;
+        DOM.itemName.value = item.name;
+        DOM.itemTypeSelect.value = item.garbageTypeId || '';
+        updateItemHint();
+        renderForms();
+        DOM.itemName.focus();
+        DOM.itemForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      function updateItemHint() {
+        const name = DOM.itemName.value.trim();
+        const dict = COMMON_ITEMS.find(x => x.name === name);
+        if (!name) {
+          DOM.itemHint.textContent = 'ごみ種別が登録されていると自動候補が使えます。';
+          return;
+        }
+        if (dict) {
+          const matchedType = state.garbageTypes.find(t => t.name === dict.typeName);
+          if (matchedType && !DOM.itemTypeSelect.value) {
+            DOM.itemTypeSelect.value = matchedType.id;
+          }
+          DOM.itemHint.textContent = matchedType
+            ? `候補: ${dict.name} → ${matchedType.name} が自動で選ばれました。`
+            : `候補: ${dict.name} → ${dict.typeName}（ごみ種別が未登録です）`;
+          return;
+        }
+        DOM.itemHint.textContent = '入力候補にある物は、ボタンや候補からすぐ入れられます。';
+      }
+
+      function addOrUpdateType(e) {
+        e.preventDefault();
+        const name = DOM.typeName.value.trim();
+        const weekdays = getTypeFormWeekdays();
+
+        if (!name) {
+          setMessage('ごみ種別の名称を入力してください。', 'warn');
+          return;
+        }
+        if (!weekdays.length) {
+          setMessage('回収曜日を1つ以上選んでください。', 'warn');
+          return;
+        }
+
+        const duplicate = state.garbageTypes.find(t => t.name === name && t.id !== editingTypeId);
+        if (duplicate) {
+          setMessage('同じ名称のごみ種別がすでにあります。', 'warn');
+          return;
+        }
+
+        const now = dateKey(todayDate());
+        if (editingTypeId) {
+          const type = getTypeById(editingTypeId);
+          if (!type) {
+            setMessage('編集対象のごみ種別が見つかりません。', 'error');
+            clearTypeForm();
+            return;
+          }
+          type.name = name;
+          type.weekdays = rankWeekdays(weekdays);
+          type.updatedAt = now;
+          setMessage(`ごみ種別「${name}」を更新しました。`, 'success');
+        } else {
+          state.garbageTypes.push({
+            id: uid(),
+            name,
+            weekdays: rankWeekdays(weekdays),
+            createdAt: now,
+            updatedAt: now
+          });
+          setMessage(`ごみ種別「${name}」を登録しました。`, 'success');
+        }
+
+        saveState();
+        clearTypeForm();
+        renderAll();
+      }
+
+      function addOrUpdateItem(e) {
+        e.preventDefault();
+        if (!state.garbageTypes.length) {
+          setMessage('先にごみ種別を登録してください。', 'warn');
+          return;
+        }
+
+        let name = DOM.itemName.value.trim();
+        let garbageTypeId = DOM.itemTypeSelect.value;
+
+        if (!name) {
+          setMessage('捨てたい物の名前を入力してください。', 'warn');
+          return;
+        }
+
+        if (!garbageTypeId) {
+          const dict = COMMON_ITEMS.find(x => x.name === name);
+          if (dict) {
+            const matchedType = state.garbageTypes.find(t => t.name === dict.typeName);
+            if (matchedType) garbageTypeId = matchedType.id;
+          }
+        }
+
+        if (!garbageTypeId) {
+          setMessage('ごみ種別を選んでください。', 'warn');
+          return;
+        }
+
+        if (!getTypeById(garbageTypeId)) {
+          setMessage('選択したごみ種別が見つかりません。', 'error');
+          return;
+        }
+
+        const nowKey = dateKey(todayDate());
+
+        if (editingItemId) {
+          const item = state.items.find(i => i.id === editingItemId);
+          if (!item) {
+            setMessage('編集対象の捨てたい物が見つかりません。', 'error');
+            clearItemForm();
+            return;
+          }
+          item.name = name;
+          item.garbageTypeId = garbageTypeId;
+          item.updatedAt = nowKey;
+          setMessage(`捨てたい物「${name}」を更新しました。`, 'success');
+        } else {
+          state.items.push({
+            id: uid(),
+            name,
+            garbageTypeId,
+            createdAt: nowKey,
+            completed: false,
+            completedAt: null,
+            completedScheduledDate: null,
+            completedOnTime: false,
+            updatedAt: nowKey
+          });
+          setMessage(`捨てたい物「${name}」を登録しました。`, 'success');
+        }
+
+        saveState();
+        clearItemForm();
+        renderAll();
+      }
+
+      function completeItem(id) {
+        const item = state.items.find(x => x.id === id);
+        if (!item || item.completed) return;
+        const today = todayDate();
+        const scheduled = getNextDueForItem(item, today);
+        item.completed = true;
+        item.completedAt = dateKey(today);
+        item.completedScheduledDate = scheduled ? dateKey(scheduled) : null;
+        item.completedOnTime = Boolean(scheduled && sameDay(scheduled, today));
+        item.updatedAt = dateKey(today);
+        saveState();
+        renderAll();
+        setMessage(
+          item.completedOnTime
+            ? `成功！「${item.name}」を回収日に合わせて完了しました。`
+            : `「${item.name}」を完了リストに移動しました。`,
+          item.completedOnTime ? 'success' : 'info'
+        );
+      }
+
+      function restoreItem(id) {
+        const item = state.items.find(x => x.id === id);
+        if (!item || !item.completed) return;
+        item.completed = false;
+        item.completedAt = null;
+        item.completedScheduledDate = null;
+        item.completedOnTime = false;
+        item.updatedAt = dateKey(todayDate());
+        saveState();
+        renderAll();
+        setMessage(`「${item.name}」を捨て待ちに戻しました。`, 'info');
+      }
+
+      function deleteItem(id) {
+        const item = state.items.find(x => x.id === id);
+        if (!item) return;
+        if (!confirm(`「${item.name}」を削除しますか？`)) return;
+        state.items = state.items.filter(x => x.id !== id);
+        saveState();
+        renderAll();
+        setMessage(`「${item.name}」を削除しました。`, 'info');
+      }
+
+      function deleteType(id) {
+        const type = getTypeById(id);
+        if (!type) return;
+        const relatedCount = state.items.filter(item => item.garbageTypeId === id).length;
+        const extra = relatedCount ? `\n関連する捨てたい物 ${relatedCount}件 も削除します。` : '';
+        if (!confirm(`ごみ種別「${type.name}」を削除しますか？${extra}`)) return;
+        state.garbageTypes = state.garbageTypes.filter(t => t.id !== id);
+        state.items = state.items.filter(item => item.garbageTypeId !== id);
+        if (editingTypeId === id) clearTypeForm();
+        if (state.garbageTypes.length === 0) {
+          DOM.itemTypeSelect.value = '';
+        }
+        saveState();
+        renderAll();
+        setMessage(`ごみ種別「${type.name}」を削除しました。`, 'info');
+      }
+
+      function exportData() {
+        const data = {
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          garbageTypes: state.garbageTypes,
+          items: state.items
+        };
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'gomi_dashi_hero.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        setMessage('JSONをエクスポートしました。', 'success');
+      }
+
+      function importDataFromFile(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const parsed = JSON.parse(reader.result);
+            const garbageTypes = Array.isArray(parsed.garbageTypes) ? parsed.garbageTypes.map(normalizeType).filter(Boolean) : [];
+            const typeIdSet = new Set(garbageTypes.map(t => t.id));
+            const items = Array.isArray(parsed.items) ? parsed.items.map(normalizeItem).filter(Boolean) : [];
+            items.forEach(item => {
+              if (item.garbageTypeId && !typeIdSet.has(item.garbageTypeId)) {
+                item.garbageTypeId = '';
+              }
+            });
+            if (!confirm('読み込むと現在のデータを置き換えます。続けますか？')) {
+              DOM.importFile.value = '';
+              return;
+            }
+            state = { garbageTypes, items };
+            editingTypeId = '';
+            editingItemId = '';
+            clearTypeForm();
+            clearItemForm();
+            saveState();
+            renderAll();
+            setMessage('JSONを読み込みました。', 'success');
+          } catch (err) {
+            console.error(err);
+            setMessage('JSONの読み込みに失敗しました。', 'error');
+          } finally {
+            DOM.importFile.value = '';
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      function clearAllData() {
+        if (!confirm('全データを削除します。よろしいですか？')) return;
+        state = { garbageTypes: [], items: [] };
+        editingTypeId = '';
+        editingItemId = '';
+        localStorage.removeItem(STORAGE_KEY);
+        clearTypeForm();
+        clearItemForm();
+        renderAll();
+        setMessage('すべてのデータを削除しました。', 'info');
+      }
+
+      function handleQuickTypeFill(name) {
+        DOM.typeName.value = name;
+        DOM.typeName.focus();
+      }
+
+      function handleCommonItemFill(name, typeName) {
+        DOM.itemName.value = name;
+        const matchedType = state.garbageTypes.find(t => t.name === typeName);
+        if (matchedType) DOM.itemTypeSelect.value = matchedType.id;
+        updateItemHint();
+        DOM.itemName.focus();
+      }
+
+      function getTitleForStreak(streak) {
+        if (streak >= 14) return 'ゴミ神';
+        if (streak >= 7) return 'ゴミマスター';
+        if (streak >= 3) return 'ゴミ職人';
+        return 'ゴミ見習い';
+      }
+
+      function bindEvents() {
+        DOM.typeForm.addEventListener('submit', addOrUpdateType);
+        DOM.itemForm.addEventListener('submit', addOrUpdateItem);
+
+        DOM.typeClearBtn.addEventListener('click', clearTypeForm);
+        DOM.itemClearBtn.addEventListener('click', clearItemForm);
+
+        DOM.typeName.addEventListener('input', () => {
+          // 何もしない
+        });
+
+        DOM.itemName.addEventListener('input', () => {
+          updateItemHint();
+        });
+
+        DOM.itemTypeSelect.addEventListener('change', () => {
+          updateItemHint();
+        });
+
+        document.addEventListener('click', (e) => {
+          const btn = e.target.closest('[data-action], [data-fill-type]');
+          if (!btn) return;
+
+          if (btn.dataset.fillType) {
+            handleQuickTypeFill(btn.dataset.fillType);
+            return;
+          }
+
+          const action = btn.dataset.action;
+          const id = btn.dataset.id;
+
+          if (action === 'edit-type') {
+            const type = getTypeById(id);
+            if (type) setTypeForm(type);
+            return;
+          }
+          if (action === 'delete-type') {
+            deleteType(id);
+            return;
+          }
+          if (action === 'edit-item') {
+            const item = state.items.find(x => x.id === id);
+            if (item && !item.completed) setItemForm(item);
+            return;
+          }
+          if (action === 'complete-item') {
+            completeItem(id);
+            return;
+          }
+          if (action === 'delete-item') {
+            deleteItem(id);
+            return;
+          }
+          if (action === 'restore-item') {
+            restoreItem(id);
+            return;
+          }
+          if (action === 'suggest-item') {
+            handleCommonItemFill(btn.dataset.name, btn.dataset.type);
+            return;
+          }
+        });
+
+        DOM.exportBtn.addEventListener('click', exportData);
+        DOM.importBtn.addEventListener('click', () => DOM.importFile.click());
+        DOM.clearBtn.addEventListener('click', clearAllData);
+        DOM.importFile.addEventListener('change', (e) => {
+          const file = e.target.files && e.target.files[0];
+          importDataFromFile(file);
+        });
+
+        window.addEventListener('beforeunload', () => {
+          try { saveState(); } catch (_) {}
+        });
+      }
+
+      function init() {
+        loadState();
+        bindEvents();
+        clearTypeForm();
+        clearItemForm();
+        renderAll();
+        if (!state.garbageTypes.length) {
+          setMessage('まずはごみ種別を1つ登録すると、今日のゴミと次回のゴミが動きます。', 'info');
+        }
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
